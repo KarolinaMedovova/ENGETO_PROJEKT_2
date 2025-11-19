@@ -4,7 +4,6 @@ Cíl projektu:
 Vylepšíte svého správce úkolů tak, aby úkoly nebyly ukládány v seznamu v paměti, ale aby se ukládaly do MySQL databáze. Program bude provádět operace CRUD (Create, Read, Update, Delete) . Po dokončení projektu napíšete automatizované testy pomocí pytest a MySQL Workbench.
 
 
-Část 1
 Požadavky na projekt:
 Použití MySQL databáze: Vytvoříte databázovou tabulku ukoly, která bude obsahovat: 
 - id 
@@ -23,7 +22,7 @@ Funkce programu
 
 2. vytvoreni_tabulky() – Vytvoření tabulky, pokud neexistuje
    - Funkce vytvoří tabulku ukoly, pokud ještě neexistuje.
-   -  Ověří existenci tabulky v databázi.
+   - Ověří existenci tabulky v databázi.
 
 ﻿
 
@@ -45,8 +44,8 @@ Funkce programu
    - Uživatel zadá název a popis úkolu.
    - Povinné údaje: Název i popis jsou povinné, nesmí být prázdné.
 - Automatické hodnoty:
-    1. Úkol dostane ID automaticky.
-    2. Výchozí stav ukolu: Nezahájeno
+    1) Úkol dostane ID automaticky.
+    2) Výchozí stav ukolu: Nezahájeno
 - Po splnění všech podmínek se úkol uloží do databáze
 
 
@@ -67,7 +66,7 @@ Funkce programu
 
 7. odstranit_ukol() – Odstranění úkolu
    - Uživatel vidí seznam úkolů.
-   -  Vybere úkol podle ID.
+   - Vybere úkol podle ID.
    - Po potvrzení bude úkol trvale odstraněn z databáze.
    - Pokud uživatel zadá neexistující ID, program ho upozorní a nechá ho vybrat znovu.
 
