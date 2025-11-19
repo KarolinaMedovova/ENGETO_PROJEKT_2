@@ -1,0 +1,16 @@
+# Ignoruj cache
+__pycache__/
+*.pyc
+**/cache/
+
+# Ignoruj logy a zálohy
+*.log
+*.bak
+
+# Ignoruj nastavení editoru
+.vscode/
+.idea/
+
+# Ignoruj konkrétní moje pomocné soubory
+Projekt2_Databaze.py
+P2.py
