@@ -11,9 +11,9 @@ def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K D
             database="projekt2"
         )
         if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
-            print("✅ Připojení k databázi bylo úspěšné.")
+            #print("✅ Připojení k databázi bylo úspěšné.")
             return spojeni
-    except Error as chyba:                          # POKUD NASTANE JAKÁKOLI HCBA PŘI PŘIPOJENÍ, SKOČ SEM
+    except Error as chyba:                          # POKUD NASTANE JAKÁKOLI CHYBA PŘI PŘIPOJENÍ, SKOČ SEM
         print(f"❌ Chyba při připojení: {chyba}")
         return None                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
     
@@ -51,7 +51,7 @@ def pridat_ukol():
         print("❌ Chyba při připojení k databázi!")
         return
     else:
-        print("Připojení k databázi proběhlo úspěšně. Nyní můžete přidávat úkoly.")
+        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete přidávat úkoly.")
 
     nazev_ukolu = input("Zadejte název úkolu: ")
     #když je název prázný nebo uživatel zadá omylem Enter:
@@ -67,6 +67,7 @@ def pridat_ukol():
 
     stav = "Nezahájeno"
     datum_vytvoreni = date.today()
+
     kurzor = spojeni.cursor()
     kurzor.execute("""
         INSERT INTO ukoly (nazev, popis, stav, datum_vytvoreni)         # do kterých sloupců chci vložit data
@@ -75,7 +76,8 @@ def pridat_ukol():
     spojeni.commit()                                                    # uloží všechny změny do DB, keré jsem provedla
     kurzor.close()                                                      # konec změn v DB
     spojeni.close()                                                     # konec spojení mezi Pythonem a DB
-    print("✅ Úkol byl úspěšně přidán do databáze.")
+    print(f"Úkol {nazev_ukolu} byl úspěšně přidán do databáze.")
+
 
 
 def zobrazit_ukoly():
@@ -83,17 +85,17 @@ def zobrazit_ukoly():
     if spojeni is None:                                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
         print("❌ Chyba při připojení k databázi!")
         return
-    else:
-        print("Připojení k databázi proběhlo úspěšně. Nyní můžete zobrazovat úkoly.")
+    #else:
+    #    print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete zobrazovat úkoly.")
         
     kurzor = spojeni.cursor()
     kurzor.execute("SELECT * FROM ukoly")                               #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY
-    vysledek = kurzor.fetchall()                                         
+    vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
 
     if vysledek:
         print("\n📋 Seznam úkolu: ")
         for ukol in vysledek:
-            print(f"{ukol[0]} {ukol[1]} {ukol[2]} {ukol[3]} {ukol[4]}")
+            print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}")
     else:
         print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
     kurzor.close()                                                       # ukončení spojení mezi Pythonem a DB
@@ -106,7 +108,7 @@ def aktualizovat_ukol():
         print("❌ Chyba při připojení k databázi!")
         return
     else:
-        print("Připojení k databázi proběhlo úspěšně. Nyní můžete aktualizovat úkoly.")
+        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete aktualizovat úkoly.")
         
     zobrazit_ukoly()
 
@@ -146,13 +148,58 @@ def aktualizovat_ukol():
     print("✅ Úkol byl aktualizován.")
 
 
+def seznam_id_ukolu():
+    spojeni = pripojeni_db()
+    if spojeni is None:
+        print("❌ Chyba při připojení k databázi!")
+        return
+    kurzor = spojeni.cursor()
+    kurzor.execute("SELECT id FROM ukoly")
+    vysledek = kurzor.fetchall()
+    seznam_id = []
+    for i in vysledek:
+        seznam_id.append(i[0])
+    #print(seznam_id)
+    kurzor.close()
+    spojeni.close()
+    return seznam_id                    # uloží výsledek funkce do budoucna, kdy jej lze jednoduše použít uložením 
+                                        # do proměnné, např. ids = seznam_id_ukolu()
+
 
 def odstranit_ukol(): 
     print("Funce odstranit úkol - zatím ve fázi vývoje.")
+    spojeni = pripojeni_db()
+    if spojeni is None:
+        print("❌ Chyba při připojení k databázi!")
+        return
+    else:
+        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete odstraňovat úkoly.")
+   
+    #zobrazit_ukoly()
+    kurzor = spojeni.cursor()
+    kurzor.execute("SELECT * FROM ukoly")                               #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY
+    vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
+    print(vysledek)
+
+    task_id = seznam_id_ukolu()
+
+    while True:
+        task_delete = input("Zadejte ID číslo úkolu, který chcete odstranit. (Pro návrat do hlavního menu zadejte 'x'.): ")
+        if task_delete.lower() == "x":
+            return
+        elif int(task_delete) in task_id:
+            print(f"Úkol ID č. {task_delete} byl odstraněn.")
+            kurzor = spojeni.cursor()
+            kurzor.execute("DELETE FROM ukoly WHERE id = %s", (task_delete,))
+            spojeni.commit()
+            kurzor.close()
+            spojeni.close()
+        else:
+            print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
+
 
 def ukoncit_program():
-    print("\nKONEC PROGRAMU! - zatím ve fázi vývoje.")
-
+    print("\nKONEC PROGRAMU!")
 
 
 def hlavni_menu():
@@ -172,6 +219,5 @@ def hlavni_menu():
             break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
         else:
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
-
 
 hlavni_menu()
