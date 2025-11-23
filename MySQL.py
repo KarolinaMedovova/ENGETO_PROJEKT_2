@@ -26,7 +26,7 @@ def vytvoreni_tabulky():
 
     try:
         kurzor = spojeni.cursor()
-        kurzor.execute("""                                          # provede dotaz do SQL
+        kurzor.execute("""                                          
             CREATE TABLE IF NOT EXISTS ukoly(
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nazev TEXT NOT NULL,
@@ -70,8 +70,8 @@ def pridat_ukol():
 
     kurzor = spojeni.cursor()
     kurzor.execute("""
-        INSERT INTO ukoly (nazev, popis, stav, datum_vytvoreni)         # do kterých sloupců chci vložit data
-        VALUES (%s, %s, %s, %s);                                        # říká, že dodám 4 hodnoty
+        INSERT INTO ukoly (nazev, popis, stav, datum_vytvoreni)        
+        VALUES (%s, %s, %s, %s);                                        
     """, (nazev_ukolu, popis_ukolu, stav, datum_vytvoreni))             # čtveřice hodnot, která se dosadí do těch %s
     spojeni.commit()                                                    # uloží všechny změny do DB, keré jsem provedla
     kurzor.close()                                                      # konec změn v DB
@@ -166,8 +166,7 @@ def seznam_id_ukolu():
                                         # do proměnné, např. ids = seznam_id_ukolu()
 
 
-def odstranit_ukol(): 
-    print("Funce odstranit úkol - zatím ve fázi vývoje.")
+def odstranit_ukol():
     spojeni = pripojeni_db()
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
@@ -175,25 +174,37 @@ def odstranit_ukol():
     else:
         print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete odstraňovat úkoly.")
    
-    #zobrazit_ukoly()
     kurzor = spojeni.cursor()
     kurzor.execute("SELECT * FROM ukoly")                               #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY
     vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
-    print(vysledek)
+    for ukol in vysledek:
+        print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}")
+    kurzor.close()
 
-    task_id = seznam_id_ukolu()
+    task_id = []
+    for i in vysledek:
+        task_id.append(i[0])
 
     while True:
         task_delete = input("Zadejte ID číslo úkolu, který chcete odstranit. (Pro návrat do hlavního menu zadejte 'x'.): ")
         if task_delete.lower() == "x":
+            spojeni.close()
             return
+        elif task_delete.isspace() or task_delete == "":
+            print("❌ Zadán prázdný vstup!")
+            continue                                        # nechá smyčku běžet dál, uživatel může zkusit znovu
         elif int(task_delete) in task_id:
-            print(f"Úkol ID č. {task_delete} byl odstraněn.")
             kurzor = spojeni.cursor()
             kurzor.execute("DELETE FROM ukoly WHERE id = %s", (task_delete,))
             spojeni.commit()
+            print(f"Úkol ID č. {task_delete} byl odstraněn.")
+            kurzor.execute("SELECT id FROM ukoly")
+            update_task_id = kurzor.fetchall()
+            task_id = []
+            for radek in update_task_id:
+                task_id.append(radek[0])
+            print(f"Aktuální seznam id: {task_id}")
             kurzor.close()
-            spojeni.close()
         else:
             print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
 
