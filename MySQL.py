@@ -1,14 +1,17 @@
+from dotenv import load_dotenv
+import os
 import mysql.connector                              # IMPORT KNIHOVY MY SQL, KTERÁ UMOŽŃUJE KOMUNIKACI PYTHONA S MYSQL
 from mysql.connector import Error                   # IMPORT ERROR
 from datetime import date                           # IMPORT DATE
+load_dotenv()                                       # NAČTENÍ .ENV SOUBORU
 
 def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K DB
     try:                                            # ZKUS PROVÉST NÁSLEDUJÍCÍ, A POKUD NASTANE CHYBY, PŘEJDI DO EXCEPT
         spojeni = mysql.connector.connect(
-            host="127.0.0.1",
-            user="root",
-            password="1111",
-            database="projekt2"
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
         )
         if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
             #print("✅ Připojení k databázi bylo úspěšné.")
