@@ -35,7 +35,7 @@ def vytvoreni_tabulky():
                 nazev TEXT NOT NULL,
                 popis TEXT NOT NULL,
                 stav VARCHAR(20) NOT NULL DEFAULT "Nezahájeno",
-                datum_vytvoreni DATE NOT NULL);
+                datum_vytvoreni DATE NOT NULL DEFAULT (CURRENT_DATE));
         """)
         spojeni.commit()                                            # uloží všechny změny do DB, keré jsem provedla
         print("Tabulka 'ukoly' je připravena.")
@@ -54,7 +54,7 @@ def pridat_ukol():
         print("❌ Chyba při připojení k databázi!")
         return
     else:
-        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete přidávat úkoly.")
+        print("\n✅ Připojení k databázi proběhlo úspěšně. Nyní můžete přidávat úkoly:\n")
 
     nazev_ukolu = input("Zadejte název úkolu: ")
     #když je název prázný nebo uživatel zadá omylem Enter:
@@ -73,9 +73,9 @@ def pridat_ukol():
 
     kurzor = spojeni.cursor()
     kurzor.execute("""
-        INSERT INTO ukoly (nazev, popis, stav, datum_vytvoreni)        
-        VALUES (%s, %s, %s, %s);                                        
-    """, (nazev_ukolu, popis_ukolu, stav, datum_vytvoreni))             # čtveřice hodnot, která se dosadí do těch %s
+        INSERT INTO ukoly (nazev, popis, stav)        
+        VALUES (%s, %s, %s);                                        
+    """, (nazev_ukolu, popis_ukolu, stav))             # čtveřice hodnot, která se dosadí do těch %s
     spojeni.commit()                                                    # uloží všechny změny do DB, keré jsem provedla
     kurzor.close()                                                      # konec změn v DB
     spojeni.close()                                                     # konec spojení mezi Pythonem a DB
@@ -89,16 +89,16 @@ def zobrazit_ukoly():
         print("❌ Chyba při připojení k databázi!")
         return
     #else:
-    #    print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete zobrazovat úkoly.")
+    #    print("\n✅ Připojení k databázi proběhlo úspěšně. Nyní můžete zobrazovat úkoly:")
         
     kurzor = spojeni.cursor()
     kurzor.execute("SELECT * FROM ukoly")                               #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY
     vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
 
     if vysledek:
-        print("\n📋 Seznam úkolu: ")
+        print("\n📋 Seznam úkolů:\n")
         for ukol in vysledek:
-            print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}")
+            print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}\n")
     else:
         print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
     kurzor.close()                                                       # ukončení spojení mezi Pythonem a DB
@@ -111,7 +111,7 @@ def aktualizovat_ukol():
         print("❌ Chyba při připojení k databázi!")
         return
     else:
-        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete aktualizovat úkoly.")
+        print("\n✅ Připojení k databázi proběhlo úspěšně. Nyní můžete aktualizovat úkoly:")
         
     zobrazit_ukoly()
 
@@ -126,15 +126,19 @@ def aktualizovat_ukol():
     while True:
         id_ukolu = input("Zadejte ID číslo úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.) ")
         if id_ukolu.lower() == "x":
-           return
-        try:
-            id_ukolu = int(id_ukolu)
-            if id_ukolu in list_id:
-                break
-            else:
-                print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly'.")
-        except ValueError:
-            print("❌ Zadejte ID úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.): ")
+            return
+        elif id_ukolu.isspace() or id_ukolu == "":
+            print("❌ Nebylo zadáno žádné ID číslo úkolu!")
+        else:
+            try:
+                id_ukolu = int(id_ukolu)
+                if id_ukolu in list_id:
+                    break
+                else:
+                    print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly'.")
+            except ValueError:
+                print("❌ ID musí být číslo!")
+
 
     while True:
         novy_stav = input("Zadejte nový stav úkolu. Vyberte z následujících možností: nezahájeno/probíhá/hotovo: ")
@@ -175,13 +179,13 @@ def odstranit_ukol():
         print("❌ Chyba při připojení k databázi!")
         return
     else:
-        print("✅ Připojení k databázi proběhlo úspěšně. Nyní můžete odstraňovat úkoly.")
+        print("\n✅ Připojení k databázi proběhlo úspěšně. Nyní můžete odstraňovat úkoly:\n")
    
     kurzor = spojeni.cursor()
     kurzor.execute("SELECT * FROM ukoly")                               #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY
     vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
     for ukol in vysledek:
-        print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}")
+        print(f"ID {ukol[0]}. Název úkolu: {ukol[1]} - Popis úkolu: {ukol[2]} - Stav: {ukol[3]} - Datum vytvoření: {ukol[4]}\n")
     kurzor.close()
 
     task_id = []
@@ -194,7 +198,7 @@ def odstranit_ukol():
             spojeni.close()
             return
         elif task_delete.isspace() or task_delete == "":
-            print("❌ Zadán prázdný vstup!")
+            print("❌ Nebylo zadáno žádné ID číslo úkolu!")
             continue                                        # nechá smyčku běžet dál, uživatel může zkusit znovu
         elif int(task_delete) in task_id:
             kurzor = spojeni.cursor()
@@ -213,12 +217,12 @@ def odstranit_ukol():
 
 
 def ukoncit_program():
-    print("\nKONEC PROGRAMU!")
+    print("\nKONEC PROGRAMU!\n")
 
 
 def hlavni_menu():
     while True:
-        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program")
+        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
         option = input("Vyberte možnost (1 - 5): ")
         if option == "1":
             pridat_ukol()
