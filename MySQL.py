@@ -35,11 +35,14 @@ def vytvoreni_tabulky():
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nazev TEXT NOT NULL,
                 popis TEXT NOT NULL,
-                stav VARCHAR(20) NOT NULL DEFAULT "Nezahájeno",
+                stav VARCHAR(20) NOT NULL DEFAULT 'Nezahájeno',
                 datum_vytvoreni DATE NOT NULL DEFAULT (CURRENT_DATE));
         """)
         spojeni.commit()                                            # uloží všechny změny do DB, keré jsem provedla
-        print("Tabulka 'ukoly' v databázi PROJEKT2 je připravena.")
+        kurzor.execute("SELECT COUNT(*) FROM ukoly")
+        pocet_radku = kurzor.fetchone()[0]
+        print(f"Tabulka 'ukoly' v databázi PROJEKT2 je připravena a obsahuje {pocet_radku} řádků.")
+        #print("Tabulka 'ukoly' v databázi PROJEKT2 je připravena.")
     except Error as e:
         print("❌ Chyba při vytváření tabulky:", e)
     finally:
@@ -95,7 +98,6 @@ def zobrazit_ukoly():
     kurzor = spojeni.cursor()
     kurzor.execute("SELECT * FROM ukoly WHERE stav = 'nezahájeno' or stav = 'probíhá'")         #NAČTE VŠECHNY ŘÁDKY Z TABULKY UKOLY, KDE STAV JE NEZAHÁJENO NEBO PROBÍHÁ
     vysledek = kurzor.fetchall()           #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu             
-
     if vysledek:
         nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
         # převedeme stav na hezký formát s velkým písmenem
