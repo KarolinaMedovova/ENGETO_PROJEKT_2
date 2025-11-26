@@ -1,10 +1,11 @@
 from dotenv import load_dotenv
 import os
+load_dotenv()                                       # NAČTENÍ .ENV SOUBORU
+from tabulate import tabulate                       # NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP
 import mysql.connector                              # IMPORT KNIHOVY MY SQL, KTERÁ UMOŽŃUJE KOMUNIKACI PYTHONA S MYSQL
 from mysql.connector import Error                   # IMPORT ERROR
 from datetime import date                           # IMPORT DATE
-load_dotenv()                                       # NAČTENÍ .ENV SOUBORU
-from tabulate import tabulate                                     # NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP
+
 
 def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K DB
     try:                                            # ZKUS PROVÉST NÁSLEDUJÍCÍ, A POKUD NASTANE CHYBY, PŘEJDI DO EXCEPT
@@ -30,19 +31,21 @@ def vytvoreni_tabulky():
 
     try:
         kurzor = spojeni.cursor()
-        kurzor.execute("""                                          
+        kurzor.execute("""                                                      
             CREATE TABLE IF NOT EXISTS ukoly(
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,                                  
                 nazev TEXT NOT NULL,
                 popis TEXT NOT NULL,
-                stav VARCHAR(20) NOT NULL DEFAULT 'Nezahájeno',
+                stav VARCHAR(20) NOT NULL DEFAULT 'nezahájeno',
                 datum_vytvoreni DATE NOT NULL DEFAULT (CURRENT_DATE));
         """)
         spojeni.commit()                                            # uloží všechny změny do DB, keré jsem provedla
         kurzor.execute("SELECT COUNT(*) FROM ukoly")
         pocet_radku = kurzor.fetchone()[0]
-        print(f"Tabulka 'ukoly' v databázi PROJEKT2 je připravena a obsahuje {pocet_radku} řádků.")
-        #print("Tabulka 'ukoly' v databázi PROJEKT2 je připravena.")
+        if not pocet_radku:
+            print(f"Tabulka 'ukoly' v databázi PROJEKT2 je připravena, ale je prázdná.")
+        else:
+            print(f"Tabulka 'ukoly' v databázi PROJEKT2 je připravena a obsahuje {pocet_radku} řádků.")
     except Error as e:
         print("❌ Chyba při vytváření tabulky:", e)
     finally:
@@ -72,8 +75,8 @@ def pridat_ukol():
         print("Byl zadán prázdný vstup. Zadejte popis úkolu.\n")
         popis_ukolu = input("Zadejte popis úkolu: ")
 
-    stav = "Nezahájeno"
-    datum_vytvoreni = date.today()
+    stav = "nezahájeno"
+    #datum_vytvoreni = date.today()                         NENÍ POTŘEBA, NEBOT SE DATUM VKLÁDÁ DO SQL AUTOMATICKY.
 
     kurzor = spojeni.cursor()
     kurzor.execute("""
