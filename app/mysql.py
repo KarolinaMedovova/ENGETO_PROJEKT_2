@@ -250,5 +250,5 @@ def hlavni_menu():
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":                          # aby se hlavní menu nespouštělo v rámci automatizovaných testů
     hlavni_menu()
