@@ -1,3 +1,5 @@
+ČÁST 1
+
 Projekt: Vylepšený task manager
 Cíl projektu: 
 
@@ -18,13 +20,11 @@ Funkce programu
    - Funkce vytvoří připojení k MySQL databázi.
    - Pokud připojení selže, zobrazí chybovou zprávu.
 
-﻿
 
 2. vytvoreni_tabulky() – Vytvoření tabulky, pokud neexistuje
    - Funkce vytvoří tabulku ukoly, pokud ještě neexistuje.
    - Ověří existenci tabulky v databázi.
 
-﻿
 
 3. hlavni_menu() – Hlavní nabídka
    - Zobrazí možnosti:
@@ -49,7 +49,6 @@ Funkce programu
 - Po splnění všech podmínek se úkol uloží do databáze
 
 
-
 5. zobrazit_ukoly() – Zobrazení úkolů
    - Seznam všech úkolů s informacemi: ID, název, popis, stav.
    - Filtr: Zobrazí pouze úkoly se stavem "Nezahájeno" nebo "Probíhá".
@@ -63,10 +62,34 @@ Funkce programu
   -  Pokud zadá neexistující ID, program ho upozorní a nechá ho vybrat znovu.
 
 
-
 7. odstranit_ukol() – Odstranění úkolu
    - Uživatel vidí seznam úkolů.
    - Vybere úkol podle ID.
    - Po potvrzení bude úkol trvale odstraněn z databáze.
    - Pokud uživatel zadá neexistující ID, program ho upozorní a nechá ho vybrat znovu.
 
+
+
+ČÁST 2
+
+Vaším úkolem je napsat automatizované testy pro správce úkolů, který pracuje s MySQL databází. Testy ověří správnou funkčnost operací přidání, aktualizace a odstranění úkolů pomocí pytest.
+
+1. Testy budou pracovat s hlavní databází nebo s testovací databází. 
+2. Testovací data se budou dynamicky přidávat.
+3. Každá funkce musí mít 2 testy: 
+      1. Pozitivní test – Ověří správnou funkčnost operace.
+      2. Negativní test – Ověří, jak program reaguje na neplatné vstupy.
+      
+Možnosti testování
+Varianta 1: můžete použít stávající DB, kde testy budou pracovat s již vytvořenou DB  tabulkou. V praxi se to nedoporučuje
+Varianta 2: Vytvoříte si testovací DB a tabulku, které bude stejnou strukturu jako již existující tabulka
+
+Co musíte udělat?
+Napsat automatizované testy pro:
+1. Přidání úkolu (pridat_ukol())
+2. Aktualizaci úkolu (aktualizovat_ukol())
+3. Odstranění úkolu (odstranit_ukol())
+
+- Každá funkce musí mít 2 testy (1x pozitivní + 1x negativní).
+- Možnost použít hlavní databázi nebo vytvořit testovací databázi.
+- Správně by se měli i testovací data smazat - Testy nesmí trvale měnit databázi (testovací data se po testu smažou). - Volitelné
