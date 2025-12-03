@@ -6,8 +6,8 @@ load_dotenv
 from mysql.connector import Error
 from app.mysql import pridat_ukol
 
-# fixtura pro připojení do testovací databáze
-def test_pridat_ukol_pozitivní(connection_test_db):
+
+def test_pridat_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Název č.1", "Popis č.1",))
     connection_test_db.commit()
@@ -27,11 +27,45 @@ def test_pridat_ukol_negativni(connection_test_db):
     cursor.close()
 
 
-def test_zobrazit_ukoly_pozitivni(connection_test_db):
+def test_aktualizovat_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
-    cursor.execute("SELECT * FROM ukoly WHERE stav = 'nezahájeno' or stav = 'probíhá'")
-    vysledek = cursor.fetchall()
-    assert vysledek
+    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Vaření", "Polévka,"))
+    connection_test_db.commit()
+    cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Vaření",))
+    vysledek = cursor.fetchone()
+    id_ukolu = vysledek[0]
+    # lze zkrátit jako id_ukolu = cursor.fetchone()[0]. ale pro případný print je lepší varianta se dvěma řádky!
+    cursor.execute("UPDATE ukoly SET stav = 'probíhá' WHERE id =%s", (id_ukolu,))
+    connection_test_db.commit()
+    cursor.execute("SELECT stav FROM ukoly WHERE id=%s", (id_ukolu,))
+    stav = cursor.fetchone()[0]
+    assert stav == "probíhá"
+    cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
+    connection_test_db.commit()
+    cursor.close()
+
+
+def test_aktualizovat_ukol_negativni(connection_test_db):
+    cursor = connection_test_db.cursor()
+    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Úklid", "Kuchyň",))
+    connection_test_db.commit()
+    cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Úklid",))
+    id_ukolu = cursor.fetchone()[0]
+    print(f"ID posledního ukolu je: {id_ukolu}")
+    cursor.execute("UPDATE ukoly SET stav='hovovo' WHERE id=%s", (id_ukolu+1,))
+    connection_test_db.commit()
+    assert cursor.rowcount == 0
+    cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
+    connection_test_db.commit()
+    cursor.close()
+
+
+
+
+
+
+
+
 
 
 """
@@ -80,6 +114,20 @@ def test_aktualizovat_ukol(id_ukolu, novy_stav):
     spojeni.commit()
 """
 
+"""
+není potřeba, nebylo v zadání...
+def test_zobrazit_ukoly_pozitivni(connection_test_db):
+    cursor = connection_test_db.cursor()
+    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Název č.10", "Popis č.10",))
+    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Název č.20", "Popis č.20",))
+    connection_test_db.commit()
+    cursor.execute("SELECT * FROM ukoly WHERE stav = 'nezahájeno' or stav = 'probíhá'")
+    vysledek = cursor.fetchall()
+    assert vysledek
 
 
+def test_zobrazit_ukoly_negativni(connection_test_db):
+    cursos = connection_test_db.cursos()
+    cursor.execute("SELECT ")
 
+"""
