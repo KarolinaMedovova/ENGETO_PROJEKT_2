@@ -4,7 +4,7 @@ import mysql.connector
 from dotenv import load_dotenv
 load_dotenv
 from mysql.connector import Error
-from app.mysql import pridat_ukol
+from app.mysql import pridat_ukol, aktualizovat_ukol, odstranit_ukol
 
 
 def test_pridat_ukol_pozitivni(connection_test_db):
@@ -61,8 +61,22 @@ def test_aktualizovat_ukol_negativni(connection_test_db):
 
 
 
-
-
+def test_odstranit_ukol_pozitivni(connection_test_db):
+    cursor = connection_test_db.cursor()
+    cursor.execute("SELECT * FROM ukoly")
+    original_ids = cursor.fetchall()
+    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Odstranit ukol", "Odstranit pomocí id",))
+    connection_test_db.commit()
+    new_id = cursor.lastrowid
+    print(f"---ID nově vloženého ukolu je a bylo {new_id} ---")
+    cursor.execute("SELECT * FROM ukoly")
+    next_ids = cursor.fetchall()
+    cursor.execute("DELETE FROM ukoly WHERE id = %s", (new_id,))
+    connection_test_db.commit()
+    cursor.execute("SELECT * FROM ukoly")
+    finally_ids = cursor.fetchall()
+    assert original_ids == finally_ids
+    cursor.close()
 
 
 
