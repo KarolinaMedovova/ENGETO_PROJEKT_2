@@ -1,10 +1,11 @@
-import os
+# import os
 import pytest
 import mysql.connector
 from dotenv import load_dotenv
-load_dotenv
+load_dotenv()
 from mysql.connector import Error
-from app.mysql import pridat_ukol, aktualizovat_ukol, odstranit_ukol
+#from app.P2_mysql import pridat_ukol, aktualizovat_ukol, odstranit_ukol
+
 
 
 def test_pridat_ukol_pozitivni(connection_test_db):
@@ -79,6 +80,27 @@ def test_odstranit_ukol_pozitivni(connection_test_db):
     cursor.close()
 
 
+def test_odstranit_ukol_negativni(connection_test_db):
+    cursor = connection_test_db.cursor()
+    cursor.execute("SELECT * FROM ukoly")
+    rows_before = cursor.fetchall()
+    ids = []
+    for i in rows_before:
+        ids.append(i[0])
+    #print(f"Seznam všech id = {ids}.")
+    cursor.execute("DELETE FROM ukoly WHERE id = %s", (19,))
+    connection_test_db.commit()
+    assert cursor.rowcount == 0
+    cursor.execute("SELECT * FROM ukoly")
+    rows_after = cursor.fetchall()
+    assert rows_before == rows_after
+    cursor.close()
+
+
+
+
+
+
 
 
 
@@ -117,18 +139,6 @@ def pripojeni_prod_db():
 
 
     
-
-
-
-def test_aktualizovat_ukol(id_ukolu, novy_stav):
-    spojeni = pripojeni_test_db()
-    cursor = spojeni.cursor()
-    sql = "UPDATE ukoly SET stav = %x WHERE id = %s"
-    cursor.execute(sql, (novy_stav, id_ukolu))
-    spojeni.commit()
-"""
-
-"""
 není potřeba, nebylo v zadání...
 def test_zobrazit_ukoly_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
