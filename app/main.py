@@ -55,8 +55,7 @@ def vytvoreni_tabulky():
 
 
 
-def pridat_ukol():
-    spojeni = pripojeni_db()
+def pridat_ukol(spojeni):
     if spojeni is None:                              # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
         print("❌ Chyba při připojení k databázi!")
         return
@@ -90,8 +89,7 @@ def pridat_ukol():
 
 
 
-def zobrazit_ukoly():
-    spojeni = pripojeni_db()
+def zobrazit_ukoly(spojeni):
     if spojeni is None:                                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
         print("❌ Chyba při připojení k databázi!")
         return
@@ -116,8 +114,7 @@ def zobrazit_ukoly():
 
 
 
-def aktualizovat_ukol():
-    spojeni = pripojeni_db()
+def aktualizovat_ukol(spojeni):
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
         return
@@ -184,8 +181,7 @@ def seznam_id_ukolu():
                                         # do proměnné, např. ids = seznam_id_ukolu()
 
 
-def odstranit_ukol():
-    spojeni = pripojeni_db()
+def odstranit_ukol(spojeni):
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
         return
@@ -229,24 +225,28 @@ def odstranit_ukol():
             print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
 
 
-def ukoncit_program():
+def ukoncit_program(spojeni):
+    if spojeni and spojeni.is_connected():
+        spojeni.close()
+        print("Spojení s databází 'projekt2' bylo ukončeno!")
     print("\nKONEC PROGRAMU!\n")
 
 
 def hlavni_menu():
+    spojeni = pripojeni_db()
     while True:
         print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
         option = input("Vyberte možnost (1 - 5): ")
         if option == "1":
-            pridat_ukol()
+            pridat_ukol(spojeni)
         elif option == "2":
-            zobrazit_ukoly()
+            zobrazit_ukoly(spojeni)
         elif option == "3":
-            aktualizovat_ukol()
+            aktualizovat_ukol(spojeni)
         elif option == "4":
-            odstranit_ukol()
+            odstranit_ukol(spojeni)
         elif option == "5":
-            ukoncit_program()
+            ukoncit_program(spojeni)
             break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
         else:
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
