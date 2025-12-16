@@ -1,16 +1,80 @@
-# NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP:
-from tabulate import tabulate
-from app.db import pripojeni_db, pridat_ukol_db, zobrazit_ukoly_db, 
+import os
+from dotenv import load_dotenv
+load_dotenv()                                       # NAČTENÍ .ENV SOUBORU
+#from tabulate import tabulate                       # NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP
+import mysql.connector                              # IMPORT KNIHOVY MY SQL, KTERÁ UMOŽŃUJE KOMUNIKACI PYTHONA S MYSQL
+from mysql.connector import Error                   # IMPORT ERROR
+#from datetime import date                           # IMPORT DATE
+#datum_vytvoreni = date.today()                         NENÍ POTŘEBA, NEBOT SE DATUM VKLÁDÁ DO SQL AUTOMATICKY.
 
-# FUNKCE PRO PŘIDÁNÍ ÚKOLU:
-def pridat_ukol_ui(spojeni):
-    nazev_ukolu = input("Zadejte název úkolu: ")
-    popis_ukolu = input("Zadejte popis úkolu: ")
-    pridat_ukol_db(spojeni, nazev_ukolu, popis_ukolu)
-    print(f"=Ukol '{nazev_ukolu}' byl vložen do databáze.")
+#FUNKCE PRO PŘIPOJENÍ DO DB:
+def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K DB
+    try:                                            # ZKUS PROVÉST NÁSLEDUJÍCÍ, A POKUD NASTANE CHYBY, PŘEJDI DO EXCEPT
+        spojeni = mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+        if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
+            #print("✅ Připojení k databázi 'projekt2' bylo úspěšné.")
+            return spojeni 
+    except Error as chyba:                          # POKUD NASTANE JAKÁKOLI CHYBA PŘI PŘIPOJENÍ, SKOČ SEM
+        print(f"❌ Chyba při připojení: {chyba}")
+        return None                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
 
-#___________________________________________________________________________________________
 
+
+# FUNKCE PRO VYTVOŘENÍ TABULKY V DB:
+def vytvoreni_tabulky():
+    spojeni = pripojeni_db()
+    if spojeni is None:
+        print("❌ Nelze vytvořit tabulku, protože připojení selhalo.")
+        return
+
+    try:
+        cursor = spojeni.cursor()
+        cursor.execute("""                                                      
+            CREATE TABLE IF NOT EXISTS ukoly(
+                id INT AUTO_INCREMENT PRIMARY KEY,                                  
+                nazev TEXT NOT NULL,
+                popis TEXT NOT NULL,
+                stav VARCHAR(20) NOT NULL DEFAULT 'nezahájeno',
+                datum_vytvoreni DATE NOT NULL DEFAULT (CURDATE));
+        """)
+        spojeni.commit()
+        cursor.execute("SELECT COUNT(*) FROM ukoly")
+        pocet_radku = cursor.fetchone()[0]
+        if not pocet_radku:
+            print(f"Tabulka 'ukoly' v databázi 'projekt2' je připravena, ale je prázdná.")
+        else:
+            print(f"Tabulka 'ukoly' v databázi 'projekt2' je připravena a obsahuje {pocet_radku} řádků.")
+    except Error as chyba:
+        print("❌ Chyba při vytváření tabulky:", chyba)
+    finally:
+        cursor.close()                                              # konec změn v DB
+        spojeni.close()                                             # konec spojení mezi Pythonem a DB
+        #datum_vytvoreni = date.today()                         NENÍ POTŘEBA, NEBOT SE DATUM VKLÁDÁ DO SQL AUTOMATICKY.
+
+
+#FUNKCE PRO PŘIDÁNÍ ÚKOLU: 
+def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
+    try:
+        cursor = spojeni.cursor()
+        cursor.execute("""
+            INSERT INTO ukoly (nazev, popis, stav)        
+            VALUES (%s, %s, %s);                                        
+        """, (nazev, popis, stav))                             
+        spojeni.commit()                                               
+        print(f"✅ Úkol '{nazev}' byl uložen do databáze.")
+    except Error as chyba:
+        print(f"❌ Chyba při přidávání úkolu: {chyba}")
+    finally:
+        cursor.close()                                                     
+
+# ---------------------------------------------------------------------------------------------------------
+
+#FUNKCE PRO ZOBRAZNÍ ÚKOLŮ:
 def zobrazit_ukoly(spojeni):
     if spojeni is None:                                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
         print("❌ Chyba při připojení k databázi!")
