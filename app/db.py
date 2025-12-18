@@ -17,21 +17,14 @@ def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K D
             database=os.getenv("DB_NAME")
         )
         if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
-            #print("✅ Připojení k databázi 'projekt2' bylo úspěšné.")
-            return spojeni 
+            return spojeni, None
     except Error as chyba:                          # POKUD NASTANE JAKÁKOLI CHYBA PŘI PŘIPOJENÍ, SKOČ SEM
-        print(f"❌ Chyba při připojení: {chyba}")
-        return None                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
+        return None, chyba                             # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
 
 
 
 # FUNKCE PRO VYTVOŘENÍ TABULKY V DB:
-def vytvoreni_tabulky():
-    spojeni = pripojeni_db()
-    if spojeni is None:
-        print("❌ Nelze vytvořit tabulku, protože připojení selhalo.")
-        return
-
+def vytvoreni_tabulky_db(spojeni):
     try:
         cursor = spojeni.cursor()
         cursor.execute("""                                                      
@@ -40,21 +33,15 @@ def vytvoreni_tabulky():
                 nazev TEXT NOT NULL,
                 popis TEXT NOT NULL,
                 stav VARCHAR(20) NOT NULL DEFAULT 'nezahájeno',
-                datum_vytvoreni DATE NOT NULL DEFAULT (CURDATE));
+                datum_vytvoreni DATE NOT NULL DEFAULT (CURDATE())
+            );
         """)
         spojeni.commit()
-        cursor.execute("SELECT COUNT(*) FROM ukoly")
-        pocet_radku = cursor.fetchone()[0]
-        if not pocet_radku:
-            print(f"Tabulka 'ukoly' v databázi 'projekt2' je připravena, ale je prázdná.")
-        else:
-            print(f"Tabulka 'ukoly' v databázi 'projekt2' je připravena a obsahuje {pocet_radku} řádků.")
+        return True, None
     except Error as chyba:
-        print("❌ Chyba při vytváření tabulky:", chyba)
+        return False, chyba
     finally:
-        cursor.close()                                              # konec změn v DB
-        spojeni.close()                                             # konec spojení mezi Pythonem a DB
-        #datum_vytvoreni = date.today()                         NENÍ POTŘEBA, NEBOT SE DATUM VKLÁDÁ DO SQL AUTOMATICKY.
+        cursor.close()                                                                                   
 
 
 #FUNKCE PRO PŘIDÁNÍ ÚKOLU: 
@@ -66,9 +53,9 @@ def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
             VALUES (%s, %s, %s);                                        
         """, (nazev, popis, stav))                             
         spojeni.commit()                                               
-        print(f"✅ Úkol '{nazev}' byl uložen do databáze.")
+        return True, None
     except Error as chyba:
-        print(f"❌ Chyba při přidávání úkolu: {chyba}")
+        return False, chyba
     finally:
         cursor.close()                                                     
 
@@ -79,17 +66,9 @@ def zobrazit_ukoly_db(spojeni):
         cursor = spojeni.cursor()
         cursor.execute("SELECT * FROM ukoly WHERE stav IN ('nezahájeno','probíhá') ORDER BY datum_vytvoreni DESC")        
         vysledek = cursor.fetchall()               #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu        
-        if vysledek:
-            nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
-            # převedeme stav na hezký formát s velkým písmenem
-            vysledek_format = [(id, nazev, popis, stav.capitalize(), datum) for id, nazev, popis, stav, datum in vysledek]
-            print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
-        else:
-            print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
-        return vysledek
-
+        return vysledek, None
     except Error as chyba:
-        print(f"Při zobrazení úkolů došlo k chybě '{chyba}'.")
+        return None, chyba
     finally:
         cursor.close()
 
@@ -100,73 +79,51 @@ def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
         cursor = spojeni.cursor()
         cursor.execute("UPDATE ukoly SET stav = %s WHERE id = %s", (novy_stav, id_ukolu))
         spojeni.commit()
-        return True 
+        if cursor.rowcount == 0:
+            return False, "Úkol s tímto ID neexistuje"
+        return True, None
     except Error as chyba:
-        print(f"Při aktualizaci úkolu došlo k chybě '{chyba}'.")
-        return False
-        #return False, chyba
+        return False, chyba
     finally:
         cursor.close()
     
  
+
 #FUNKCE PRO ZOBRAZENÍ VŠECH ID ÚKOLŮ:
-def seznam_id_ukolu(spojeni):
-    cursor = spojeni.cursor()
-    cursor.execute("SELECT id FROM ukoly")
-    vysledek = cursor.fetchall()
-    seznam_id = []
-    for i in vysledek:
-        seznam_id.append(i[0])
-    #print(seznam_id)
-    cursor.close()
-    return seznam_id                    # uloží výsledek funkce do budoucna, kdy jej lze jednoduše použít uložením 
-                                        # do proměnné, např. ids = seznam_id_ukolu()
+def seznam_id_ukolu_db(spojeni):
+    try:
+        cursor = spojeni.cursor()
+        cursor.execute("SELECT id FROM ukoly")
+        vysledek = cursor.fetchall()
+        seznam_id = []
+        for i in vysledek:
+            seznam_id.append(i[0])
+        return seznam_id, None
+    except Error as chyba:
+        return None, chyba
+    finally:
+        cursor.close()
+
 
 
 #FUNKCE PRO ODSTRANĚNÍ ÚKOLŮ:
 def odstranit_ukol_db(spojeni, id_ukolu):
     try:
         cursor = spojeni.cursor()
-        cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu))    
+        cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))    
         spojeni.commit()
         if cursor.rowcount > 0:
-            return True
+            return True, None
         else:
-            return False
+            return False, "Úkol s tímto ID neexistuje"
     except Error as chyba:
-        return False, chyba
+        return None, chyba
     finally:
         cursor.close()
+    
     
 
 #FUNKCE PRO UKONČENÍ SPOJENI:
 def ukonceni_spojeni_db(spojeni):
     if spojeni and spojeni.is_connected():
         spojeni.close()
-
-#_________________________________________________________________
-def hlavni_menu():
-    spojeni = pripojeni_db()
-    while True:
-        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
-        option = input("Vyberte možnost (1 - 5): ")
-        if option == "1":
-            pridat_ukol(spojeni)
-        elif option == "2":
-            zobrazit_ukoly(spojeni)
-        elif option == "3":
-            aktualizovat_ukol(spojeni)
-        elif option == "4":
-            odstranit_ukol(spojeni)
-        elif option == "5":
-            ukoncit_program(spojeni)
-            break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
-        else:
-            print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
-
-
-if __name__ == "__main__":                          # aby se hlavní menu nespouštělo v rámci automatizovaných testů
-    hlavni_menu()
-
-if __name__ == "__main__":
-    vytvoreni_tabulky()
