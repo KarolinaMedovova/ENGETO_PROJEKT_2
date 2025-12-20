@@ -1,6 +1,73 @@
 # NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP:
 from tabulate import tabulate
-from app.db import pripojeni_db, pridat_ukol_db, zobrazit_ukoly_db, 
+# 1) IMPORTY FUNKCÍ Z DB:
+from db import ( pripojeni_db, vytvoreni_tabulky_db, pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, seznam_id_ukolu_db, odstranit_ukol_db, ukonceni_spojeni_db)
+
+# 2) FUNKCE PRO PŘIPOJENÍ K DB:
+spojeni, chyba = pripojeni_db()
+if chyba:
+    print(f"❌ Nelze se připojit k databázi: {chyba}")
+print("Připojení k databázi proběhlo úspěšně!")
+
+
+# 3) FUNKCE PRO VYTVOŘENÍ TABULKY:
+ok, chyba = vytvoreni_tabulky_db(pripojeni_db)
+if chyba:
+    print(f"Při vytvoření tabulky došlo k chybě: {chyba}")
+else:
+    print("Tabulka byla vytvořena a je připravena.")
+
+
+# 4) FUNKCE HLAVNÍ MENU:
+def hlavni_menu(spojeni):
+   while True:
+        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
+        option = input("Vyberte možnost (1 - 5): ")
+        if option == "1":
+            nazev = input("Zadejte název úkolu: ")
+            #když je název prázný nebo uživatel zadá omylem Enter:
+            while nazev.isspace() or nazev == "":
+                print("Byl zadán prázdný vstup. Zadejte název úkolu.\n")
+                nazev = input("Zadejte název úkolu: ")
+
+            popis = input("Zadejte popis úkolu: ")
+            #když je popis prázný nebo uživatel zadá omylem Enter:
+            while popis.isspace() or popis == "":
+                print("Byl zadán prázdný vstup. Zadejte popis úkolu.\n")
+                popis = input("Zadejte popis úkolu: ")
+
+            pridat_ukol_db(spojeni, nazev, popis)
+            print(f"Úkol {nazev} byl úspěšně přidán do databáze 'projekt2'.")
+
+
+        elif option == "2":
+            vysledek = zobrazit_ukoly_db(spojeni)            
+            if vysledek:
+                nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
+                # převedeme stav na hezký formát s velkým písmenem
+                vysledek_format = [(id, nazev, popis, stav.capitalize(), datum) for id, nazev, popis, stav, datum in vysledek]
+                print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
+            else:
+                print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
+
+
+
+        elif option == "3":
+            aktualizovat_ukol_db(spojeni)
+
+
+
+
+            
+        elif option == "4":
+            odstranit_ukol_db(spojeni)
+        elif option == "5":
+            ukonceni_spojeni_db(spojeni)
+            break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
+        else:
+            print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
+    
+
 
 # FUNKCE PRO PŘIDÁNÍ ÚKOLU:
 def pridat_ukol_ui(spojeni):
@@ -11,7 +78,7 @@ def pridat_ukol_ui(spojeni):
 
 #___________________________________________________________________________________________
 
-def zobrazit_ukoly(spojeni):
+def zobrazit_ukoly_ui(spojeni):
     if spojeni is None:                                                 # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
         print("❌ Chyba při připojení k databázi!")
         return
@@ -36,14 +103,14 @@ def zobrazit_ukoly(spojeni):
 
 
 
-def aktualizovat_ukol(spojeni):
+def aktualizovat_ukol_ui(spojeni):
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
         return
     else:
         print("\n✅ Připojení k databázi PROJEKT2 proběhlo úspěšně. Nyní můžete aktualizovat úkoly:")
         
-    zobrazit_ukoly()
+    zobrazit_ukoly_ui()
 
     cursor = spojeni.cursor()
     cursor.execute("SELECT id FROM ukoly")
@@ -85,7 +152,7 @@ def aktualizovat_ukol(spojeni):
     print("✅ Úkol byl aktualizován.")
 
 
-def seznam_id_ukolu():
+def seznam_id_ukolu_ui():
     spojeni = pripojeni_db()
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
@@ -103,7 +170,7 @@ def seznam_id_ukolu():
                                         # do proměnné, např. ids = seznam_id_ukolu()
 
 
-def odstranit_ukol(spojeni):
+def odstranit_ukol_ui(spojeni):
     if spojeni is None:
         print("❌ Chyba při připojení k databázi!")
         return
@@ -147,7 +214,7 @@ def odstranit_ukol(spojeni):
             print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
 
 
-def ukoncit_program(spojeni):
+def ukoncit_program_ui(spojeni):
     if spojeni and spojeni.is_connected():
         spojeni.close()
         print("Spojení s databází 'projekt2' bylo ukončeno!")
@@ -160,15 +227,15 @@ def hlavni_menu():
         print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
         option = input("Vyberte možnost (1 - 5): ")
         if option == "1":
-            pridat_ukol(spojeni)
+            pridat_ukol_ui(spojeni)
         elif option == "2":
-            zobrazit_ukoly(spojeni)
+            zobrazit_ukoly_ui(spojeni)
         elif option == "3":
-            aktualizovat_ukol(spojeni)
+            aktualizovat_ukol_ui(spojeni)
         elif option == "4":
-            odstranit_ukol(spojeni)
+            odstranit_ukol_ui(spojeni)
         elif option == "5":
-            ukoncit_program(spojeni)
+            ukoncit_program_ui(spojeni)
             break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
         else:
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
@@ -178,4 +245,4 @@ if __name__ == "__main__":                          # aby se hlavní menu nespou
     hlavni_menu()
 
 if __name__ == "__main__":
-    vytvoreni_tabulky()
+    vytvoreni_tabulky_db()
