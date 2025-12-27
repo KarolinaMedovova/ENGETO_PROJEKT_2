@@ -58,7 +58,7 @@ def hlavni_menu(spojeni):
 
 
 
-            
+
         elif option == "4":
             odstranit_ukol_db(spojeni)
         elif option == "5":
