@@ -23,6 +23,7 @@ def hlavni_menu(spojeni):
    while True:
         print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
         option = input("Vyberte možnost (1 - 5): ")
+        # volba 1, přidání úkolu
         if option == "1":
             nazev = input("Zadejte název úkolu: ")
             #když je název prázný nebo uživatel zadá omylem Enter:
@@ -39,28 +40,68 @@ def hlavni_menu(spojeni):
             pridat_ukol_db(spojeni, nazev, popis)
             print(f"Úkol {nazev} byl úspěšně přidán do databáze 'projekt2'.")
 
-
+        # volba 2, zobrazení úkolů:
         elif option == "2":
             vysledek = zobrazit_ukoly_db(spojeni)            
             if vysledek:
                 nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
-                # převedeme stav na hezký formát s velkým písmenem
-                vysledek_format = [(id, nazev, popis, stav.capitalize(), datum) for id, nazev, popis, stav, datum in vysledek]
+                # capitalize převádí první písmeno na velké
+                vysledek_format = []
+                for id, nazev, popis, stav, datum in vysledek:
+                    vysledek_format.append((id, nazev, popis, stav.capitalize(), datum))
+                # tabulate vezme seznam řádků a názvy sloupců a vypíše je jako tabulku ve zvoleném stylu grid.
                 print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
             else:
                 print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
 
-
-
+        # volba 3, aktualizování úkolu: 
         elif option == "3":
-            aktualizovat_ukol_db(spojeni)
+            vysledek, chyba = zobrazit_ukoly_db(spojeni)
+            if chyba is not None:
+                print(f"Došlo k chybě: {chyba}.")
+                continue
+            
+            if vysledek :
+                nazvy_sloupcu = ["ID", "Název", "Stav"]
+                seznam_hodnot = []
+                for id, nazev, popis, stav, datum in vysledek:
+                    seznam_hodnot.append((id, nazev, stav.capitalize(),))
+                print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
 
+            list_id = []
+            for radek in seznam_hodnot:                         # projdeme každý řádek v seznamu
+                list_id.append(radek[0])                                  # vezmeme první číslo z n-tice a přidáme ho do list_id
+            while True:
+                id_ukolu = input("Zadejte ID číslo úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.) ")
+                if id_ukolu.lower() == "x":
+                    return
+                elif id_ukolu.isspace() or id_ukolu == "":
+                    print("❌ Nebylo zadáno žádné ID číslo úkolu!")
+                else:
+                    try:
+                        id_ukolu = int(id_ukolu)
+                        if id_ukolu in list_id:
+                            break
+                        else:
+                            print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly'.")
+                    except ValueError:
+                        print("❌ ID musí být číslo!")
 
+            while True:
+                novy_stav = input("Zadejte nový stav úkolu. Vyberte z následujících možností: nezahájeno/probíhá/hotovo: ")
+                novy_stav = novy_stav.lower()
+                if novy_stav == "nezahájeno" or novy_stav == "probíhá" or novy_stav == "hotovo":
+                    break
+                else:
+                    print("Nový stav úkolu byl zadán špatně. Prosím, zadejte přesný název nového stavu - nezahájeno/probíhá/hotovo: ")
+
+            print("✅ Úkol byl aktualizován.")
 
 
 
         elif option == "4":
             odstranit_ukol_db(spojeni)
+        
         elif option == "5":
             ukonceni_spojeni_db(spojeni)
             break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
