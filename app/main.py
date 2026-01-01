@@ -97,10 +97,59 @@ def hlavni_menu(spojeni):
 
             print("✅ Úkol byl aktualizován.")
 
-
-
+        # volba 4, odstranění úkolu:
         elif option == "4":
-            odstranit_ukol_db(spojeni)
+            vysledek, chyba = zobrazit_ukoly_db(spojeni)
+            if chyba is not None:
+                print(f"Došlo k chybě: {chyba}.")
+                continue
+            if vysledek:
+                nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
+                seznam_hodnot = []
+                for id, nazev, popis, stav, datum_vytvoreni in vysledek:
+                    seznam_hodnot.append((id, nazev, popis, stav.capitalize(), datum_vytvoreni,))
+                print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
+
+                seznam_id = []
+                for i in vysledek:
+                    seznam_id.append(i[0])
+
+                while True:
+                    id_delete = input("Zadejte ID číslo úkolu, který chcete odstranit. (Pro návrat do hlavního menu zadejte 'x'.): ")
+                    if id_delete.lower() == "x":
+                        return
+                    elif id_delete.isspace() or id_delete == "":
+                        print("❌ Nebylo zadáno žádné ID číslo úkolu!")
+                        continue                                      # nechá smyčku běžet dál, uživatel může zkusit znovu
+
+
+                    # seznam_id = [1, 2, 3, 5, 8, 9, 10]
+                    # vysledek = [(1. nazev1, popis1, hotov, 1.1.2026), (2. nazev2, popis2, hotovo, 3.2.2025,)]
+                    try:
+                        id_delete_int = int(id_delete)
+                        if id_delete_int in seznam_id:
+
+                            seznam_id.
+
+
+                    except Error as e:
+                        print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
+        
+
+                        
+
+                    elif task_delete in seznam_id:
+
+                        print(f"Úkol s ID č. {task_delete} byl odstraněn.")
+                        print("\nAktualizovaný seznam : \n")
+                        update_list = []
+                        for id, nazev, popis, stav.capitalize(), datum_vytvoreni in vysledek:
+                            print(tabulate)
+                        for i in update_list:
+                            print(f"ID {i[0]}. Název úkolu: {i[1]} - Popis úkolu: {i[2]} - Stav: {i[3].capitalize()} - Datum vytvoření: {i[4]}\n")
+                    else:
+                        print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
+
         
         elif option == "5":
             ukonceni_spojeni_db(spojeni)
