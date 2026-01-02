@@ -128,29 +128,24 @@ def hlavni_menu(spojeni):
                     try:
                         id_delete_int = int(id_delete)
                         if id_delete_int in seznam_id:
+                            ok, chyba = odstranit_ukol_db(spojeni, id_delete_int)
+                            if ok is True:
+                                print(f"Úkol s ID č. {id_delete_int} byl odstraněn.")
+                                break
+                            elif ok is False:
+                                print(f"Úkol s tímto ID v databázi neexistuje; {chyba}")
+                                continue
+                            elif ok is None:
+                                print(f"CHYBA: {chyba}!")
+                                return
+                        else:
+                            print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
 
-                            seznam_id.
+                    except ValueError:
+                        print("❌ Byla zadána neplatná volba. Prosím, zvolte správné číslo ID úkolu")
+                        continue
 
 
-                    except Error as e:
-                        print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
-        
-
-                        
-
-                    elif task_delete in seznam_id:
-
-                        print(f"Úkol s ID č. {task_delete} byl odstraněn.")
-                        print("\nAktualizovaný seznam : \n")
-                        update_list = []
-                        for id, nazev, popis, stav.capitalize(), datum_vytvoreni in vysledek:
-                            print(tabulate)
-                        for i in update_list:
-                            print(f"ID {i[0]}. Název úkolu: {i[1]} - Popis úkolu: {i[2]} - Stav: {i[3].capitalize()} - Datum vytvoření: {i[4]}\n")
-                    else:
-                        print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
-
-        
         elif option == "5":
             ukonceni_spojeni_db(spojeni)
             break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
