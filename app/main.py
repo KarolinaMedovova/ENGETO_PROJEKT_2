@@ -3,171 +3,182 @@ from tabulate import tabulate
 # 1) IMPORTY FUNKCÍ Z DB:
 from db import ( pripojeni_db, vytvoreni_tabulky_db, pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, seznam_id_ukolu_db, odstranit_ukol_db, ukonceni_spojeni_db)
 
-# 2) FUNKCE PRO PŘIPOJENÍ K DB:
-spojeni, chyba = pripojeni_db()
-if chyba:
-    print(f"❌ Nelze se připojit k databázi: {chyba}")
-print("Připojení k databázi proběhlo úspěšně!")
 
 
-# 3) FUNKCE PRO VYTVOŘENÍ TABULKY:
-ok, chyba = vytvoreni_tabulky_db(spojeni)
-if chyba:
-    print(f"Při vytvoření tabulky došlo k chybě: {chyba}")
-else:
-    print("Tabulka byla vytvořena a je připravena.")
+# funkce přidat úkol:
+def pridat_ukol(spojeni):
+    nazev = input("Zadejte název úkolu: ")
+    #když je název prázný nebo uživatel zadá omylem Enter:
+    while nazev.isspace() or nazev == "":                
+        print("Byl zadán prázdný vstup. Zadejte název úkolu.\n")
+        nazev = input("Zadejte název úkolu: ")
+
+    popis = input("Zadejte popis úkolu: ")
+    #když je popis prázný nebo uživatel zadá omylem Enter:
+    while popis.isspace() or popis == "":
+        print("Byl zadán prázdný vstup. Zadejte popis úkolu.\n")
+        popis = input("Zadejte popis úkolu: ")
+        
+    ok, chyba = pridat_ukol_db(spojeni, nazev, popis)
+    if ok:
+        print(f"Úkol '{nazev}' byl úspěšně přidán do databáze 'projekt2'.")
+    else:
+        print(f"❌ Úkol se nepodařilo přidat: {chyba}")
+
+# funkce zobrazení úkolů:
+def zobrazit_ukoly(spojeni):
+    vysledek, chyba = zobrazit_ukoly_db(spojeni)
+    if chyba:
+        print(f"Došlo k chybě: {chyba}")
+        return
+           
+    if vysledek:
+        nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
+        # capitalize převádí první písmeno na velké
+        vysledek_format = []
+        for id, nazev, popis, stav, datum in vysledek:
+            vysledek_format.append((id, nazev, popis, stav.capitalize(), datum))
+            # tabulate vezme seznam řádků a názvy sloupců a vypíše je jako tabulku ve zvoleném stylu grid.
+        print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
+    else:
+        print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
 
 
-# 4) FUNKCE HLAVNÍ MENU:
-def hlavni_menu(spojeni):
-   while True:
-        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
-        option = input("Vyberte možnost (1 - 5): ")
-        # volba 1, přidání úkolu
-        if option == "1":
-            nazev = input("Zadejte název úkolu: ")
-            #když je název prázný nebo uživatel zadá omylem Enter:
-            while nazev.isspace() or nazev == "":
-                print("Byl zadán prázdný vstup. Zadejte název úkolu.\n")
-                nazev = input("Zadejte název úkolu: ")
-
-            popis = input("Zadejte popis úkolu: ")
-            #když je popis prázný nebo uživatel zadá omylem Enter:
-            while popis.isspace() or popis == "":
-                print("Byl zadán prázdný vstup. Zadejte popis úkolu.\n")
-                popis = input("Zadejte popis úkolu: ")
-
-            ok, chyba = pridat_ukol_db(spojeni, nazev, popis)
-            if ok:
-                print(f"Úkol '{nazev}' byl úspěšně přidán do databáze 'projekt2'.")
-            else:
-                print(f"❌ Úkol se nepodařilo přidat: {chyba}")
-
-
-        # volba 2, zobrazení úkolů:
-        elif option == "2":
-            vysledek, chyba = zobrazit_ukoly_db(spojeni)
-            if chyba:
-                print(f"Došlo k chybě: {chyba}")
-                continue
-                
-            if vysledek:
-                nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
-                # capitalize převádí první písmeno na velké
-                vysledek_format = []
-                for id, nazev, popis, stav, datum in vysledek:
-                    vysledek_format.append((id, nazev, popis, stav.capitalize(), datum))
-                # tabulate vezme seznam řádků a názvy sloupců a vypíše je jako tabulku ve zvoleném stylu grid.
-                print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
-            else:
-                print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
-
-
-        # volba 3, aktualizování úkolu: 
-        elif option == "3":
-            vysledek, chyba = zobrazit_ukoly_db(spojeni)
-            if chyba is not None:
-                print(f"Došlo k chybě: {chyba}.")
-                continue
+# funkce aktualizovat úkol: 
+def aktualizovat_ukol(spojeni):
+    vysledek, chyba = zobrazit_ukoly_db(spojeni)
+    if chyba is not None:
+        print(f"Došlo k chybě: {chyba}.")
+        return
             
-            if vysledek :
-                nazvy_sloupcu = ["ID", "Název", "Stav"]
-                seznam_hodnot = []
-                for id, nazev, popis, stav, datum in vysledek:
-                    seznam_hodnot.append((id, nazev, stav.capitalize(),))
-                print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
+    if vysledek :
+        nazvy_sloupcu = ["ID", "Název", "Stav"]
+        seznam_hodnot = []
+        for id, nazev, popis, stav, datum in vysledek:
+            seznam_hodnot.append((id, nazev, stav.capitalize(),))
+        print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
 
-            list_id = []
-            for radek in seznam_hodnot:                         # projdeme každý řádek v seznamu
-                list_id.append(radek[0])                                  # vezmeme první číslo z n-tice a přidáme ho do list_id
+    list_id = []
+    for radek in seznam_hodnot:                         # projdeme každý řádek v seznamu
+        list_id.append(radek[0])                                  # vezmeme první číslo z n-tice a přidáme ho do list_id
 
-            while True:
-                id_ukolu = input("Zadejte ID číslo úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.) ")
-                if id_ukolu.lower() == "x":
-                    return
-                elif id_ukolu.isspace() or id_ukolu == "":
-                    print("❌ Nebylo zadáno žádné ID číslo úkolu!")
-                else:
-                    try:
-                        id_ukolu = int(id_ukolu)
-                        if id_ukolu in list_id:
-                            break
-                        else:
-                            print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly'.")
-                    except ValueError:
-                        print("❌ ID musí být číslo!")
-
-            while True:
-                novy_stav = input("Zadejte nový stav úkolu. Vyberte z následujících možností: nezahájeno/probíhá/hotovo: ")
-                novy_stav = novy_stav.lower()
-                if novy_stav == "nezahájeno" or novy_stav == "probíhá" or novy_stav == "hotovo":
+    while True:
+        id_ukolu = input("Zadejte ID číslo úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.) ")
+        if id_ukolu.lower() == "x":
+            return
+        elif id_ukolu.isspace() or id_ukolu == "":
+            print("❌ Nebylo zadáno žádné ID číslo úkolu!")
+        else:
+            try:
+                id_ukolu = int(id_ukolu)
+                if id_ukolu in list_id:
                     break
                 else:
-                    print("Nový stav úkolu byl zadán špatně. Prosím, zadejte přesný název nového stavu - nezahájeno/probíhá/hotovo: ")
+                    print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly'.")
+            except ValueError:
+                print("❌ ID musí být číslo!")
+
+    while True:
+        novy_stav = input("Zadejte nový stav úkolu. Vyberte z následujících možností: nezahájeno/probíhá/hotovo: ")
+        novy_stav = novy_stav.lower()
+        if novy_stav == "nezahájeno" or novy_stav == "probíhá" or novy_stav == "hotovo":
+            break
+        else:
+            print("Nový stav úkolu byl zadán špatně. Prosím, zadejte přesný název nového stavu - nezahájeno/probíhá/hotovo: ")
           
-            ok, chyba = aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav)
-            if ok:
-                print("✅ Úkol byl aktualizován.")
+    ok, chyba = aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav)
+    if ok:
+        print("✅ Úkol byl aktualizován.")
+    else:
+        print(f"❌ Úkol se nepodařilo aktualizovat: {chyba}")
+
+
+#funkce odstranit úkol:
+def odstranit_ukol(spojeni):
+    vysledek, chyba = zobrazit_ukoly_db(spojeni)
+    if chyba is not None:
+        print(f"Došlo k chybě: {chyba}.")
+        return
+    if vysledek:
+        nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
+        seznam_hodnot = []
+        for id, nazev, popis, stav, datum_vytvoreni in vysledek:
+            seznam_hodnot.append((id, nazev, popis, stav.capitalize(), datum_vytvoreni,))
+        print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
+
+    seznam_id = []
+    for i in vysledek:
+        seznam_id.append(i[0])
+
+    while True:
+        id_delete = input("Zadejte ID číslo úkolu, který chcete odstranit. (Pro návrat do hlavního menu zadejte 'x'.): ")
+        if id_delete.lower() == "x":
+            return
+        elif id_delete.isspace() or id_delete == "":
+            print("❌ Nebylo zadáno žádné ID číslo úkolu!")
+            continue
+
+        try:
+            id_delete_int = int(id_delete)
+            if id_delete_int in seznam_id:
+                ok, chyba = odstranit_ukol_db(spojeni, id_delete_int)
+                if ok is True:
+                    print(f"Úkol s ID č. {id_delete_int} byl odstraněn.")
+                    break
+                elif ok is False:
+                    print(f"Úkol s tímto ID v databázi neexistuje; {chyba}")
+                    continue
+                elif ok is None:
+                    print(f"CHYBA: {chyba}!")
+                    return
             else:
-                print(f"❌ Úkol se nepodařilo aktualizovat: {chyba}")
+                print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
+
+        except ValueError:
+            print("❌ Byla zadána neplatná volba. Prosím, zvolte správné číslo ID úkolu")
+            continue
 
 
-        # volba 4, odstranění úkolu:
-        elif option == "4":
-            vysledek, chyba = zobrazit_ukoly_db(spojeni)
-            if chyba is not None:
-                print(f"Došlo k chybě: {chyba}.")
-                continue
-            if vysledek:
-                nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
-                seznam_hodnot = []
-                for id, nazev, popis, stav, datum_vytvoreni in vysledek:
-                    seznam_hodnot.append((id, nazev, popis, stav.capitalize(), datum_vytvoreni,))
-                print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
-
-                seznam_id = []
-                for i in vysledek:
-                    seznam_id.append(i[0])
-
-                while True:
-                    id_delete = input("Zadejte ID číslo úkolu, který chcete odstranit. (Pro návrat do hlavního menu zadejte 'x'.): ")
-                    if id_delete.lower() == "x":
-                        return
-                    elif id_delete.isspace() or id_delete == "":
-                        print("❌ Nebylo zadáno žádné ID číslo úkolu!")
-                        continue
-
-                    try:
-                        id_delete_int = int(id_delete)
-                        if id_delete_int in seznam_id:
-                            ok, chyba = odstranit_ukol_db(spojeni, id_delete_int)
-                            if ok is True:
-                                print(f"Úkol s ID č. {id_delete_int} byl odstraněn.")
-                                break
-                            elif ok is False:
-                                print(f"Úkol s tímto ID v databázi neexistuje; {chyba}")
-                                continue
-                            elif ok is None:
-                                print(f"CHYBA: {chyba}!")
-                                return
-                        else:
-                            print("❌ Zadané ID neexistuje. Zadejte platné ID z tabulky 'ukoly': ")
-
-                    except ValueError:
-                        print("❌ Byla zadána neplatná volba. Prosím, zvolte správné číslo ID úkolu")
-                        continue
-
-
-        # volba 5, ukončení programu:
-        elif option == "5":
-            print("Ukončuji program... Na shledanou.")
-            ukonceni_spojeni_db(spojeni)
-            break                         
+# funkce ukončení programu:
+def konec_programu(spojeni):
+    print("Ukončuji program... Na shledanou.")
+    ukonceni_spojeni_db(spojeni)
+    return                         
         
+
+# funkce pro hlavní menu:   
+def hlavni_menu():
+    # FUNKCE PRO PŘIPOJENÍ K DB:
+    spojeni, chyba = pripojeni_db()
+    if chyba:
+        print(f"❌ Nelze se připojit k databázi: {chyba}")
+    print("Připojení k databázi proběhlo úspěšně!")
+
+    # FUNKCE PRO VYTVOŘENÍ TABULKY:
+    ok, chyba = vytvoreni_tabulky_db(spojeni)
+    if chyba:
+        print(f"Při vytvoření tabulky došlo k chybě: {chyba}")
+    else:
+        print("Tabulka byla vytvořena a je připravena.")
+
+    while True:
+        print("\n📋 HLAVNÍ MENU :\n1. Přidat úkol\n2. Zobrazit úkoly\n3. Aktualizovat úkol\n4. Odstranit úkol\n5. Ukončit program\n--------------------------")
+        option = input("Vyberte možnost (1 - 5): ")
+        if option == "1":
+            pridat_ukol(spojeni)
+        elif option == "2":
+            zobrazit_ukoly(spojeni)
+        elif option == "3":
+            aktualizovat_ukol(spojeni)
+        elif option == "4":
+            odstranit_ukol(spojeni)
+        elif option == "5":
+            konec_programu(spojeni)
+            break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
         else:
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
-    
 
 
-if __name__ == "__main__":                          # aby se hlavní menu nespouštělo v rámci automatizovaných testů
-    hlavni_menu(spojeni)
+ # aby se hlavní menu nespouštělo v rámci automatizovaných testů
+if __name__ == "__main__":                        
+    hlavni_menu()
