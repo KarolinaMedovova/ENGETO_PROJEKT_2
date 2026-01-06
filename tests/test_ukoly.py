@@ -4,17 +4,19 @@ import mysql.connector
 from dotenv import load_dotenv
 load_dotenv()
 from mysql.connector import Error
-from app.db import zobrazit_ukoly_db
+from app.db import pridat_ukol_db, zobrazit_ukoly_db
 
 
 def test_pridat_ukol_pozitivni(connection_test_db):
+    pridat_ukol_db(connection_test_db,"Název č.1", "Popis č.1")
     cursor = connection_test_db.cursor()
-    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Název č.1", "Popis č.1",))
-    connection_test_db.commit()
     cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", ("Název č.1",))
     vysledek = cursor.fetchone()
-    assert vysledek is not None
-    cursor.fetchall()
+    #assert vysledek is not None
+    assert vysledek[1] == "Název č.1"
+    assert vysledek[2] == "Popis č.1"
+    assert vysledek[3] == "nezahájeno"
+    #cursor.fetchall()
     cursor.execute("DELETE FROM ukoly WHERE nazev = %s", ("Název č.1",))
     connection_test_db.commit()
     cursor.close()
