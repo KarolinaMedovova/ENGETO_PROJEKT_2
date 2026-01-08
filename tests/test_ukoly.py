@@ -3,10 +3,11 @@ import pytest
 import mysql.connector
 from dotenv import load_dotenv
 load_dotenv()
-from mysql.connector import Error
-from app.db import pridat_ukol_db, zobrazit_ukoly_db
+#from mysql.connector import Error
+from app.db import pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, odstranit_ukol_db
 
 
+# Pozitivní test funkce přidat úkol:
 def test_pridat_ukol_pozitivni(connection_test_db):
     pridat_ukol_db(connection_test_db,"Název č.1", "Popis č.1")
     cursor = connection_test_db.cursor()
@@ -22,31 +23,41 @@ def test_pridat_ukol_pozitivni(connection_test_db):
     cursor.close()
 
 
+# Negativní test funkce přidat úkol:
 def test_pridat_ukol_negativni(connection_test_db):
+    ok, chyba = pridat_ukol_db(connection_test_db, " ", " ")
+    assert ok is False
+    assert chyba is not None
     cursor = connection_test_db.cursor()
-    with pytest.raises(mysql.connector.errors.IntegrityError):
-        cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", (None, None,))
+    cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", (" ",))
+    vysledek = cursor.fetchall()
+    assert vysledek == []
+    #assert len(vysledek) == 0
     cursor.close()
 
 
+#--------------------------------------------------------------------------------------------------------------------------------------
+# Pozitivní test funkce aktualizovat úkol:
 def test_aktualizovat_ukol_pozitivni(connection_test_db):
+    pridat_ukol_db(connection_test_db,"Název č.2", "Popis č.2")
     cursor = connection_test_db.cursor()
-    cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Vaření", "Polévka,"))
-    connection_test_db.commit()
-    cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Vaření",))
+    cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", ("Název č.2", ))
     vysledek = cursor.fetchone()
+    assert vysledek is not None
+    assert vysledek[1] == "Název č.2"
     id_ukolu = vysledek[0]
-    # lze zkrátit jako id_ukolu = cursor.fetchone()[0]. ale pro případný print je lepší varianta se dvěma řádky!
-    cursor.execute("UPDATE ukoly SET stav = 'probíhá' WHERE id =%s", (id_ukolu,))
-    connection_test_db.commit()
+    ok, chyba = aktualizovat_ukol_db(connection_test_db, id_ukolu, "hotovo")
+    assert ok is True
+    assert chyba is None
     cursor.execute("SELECT stav FROM ukoly WHERE id=%s", (id_ukolu,))
-    stav = cursor.fetchone()[0]
-    assert stav == "probíhá"
+    novy_stav = cursor.fetchone()[0]
+    assert novy_stav == "hotovo"
     cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
     connection_test_db.commit()
     cursor.close()
 
 
+# Negativní test funkce aktualizovat úkol:
 def test_aktualizovat_ukol_negativni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("INSERT INTO ukoly (nazev, popis) VALUES (%s, %s)", ("Úklid", "Kuchyň",))
