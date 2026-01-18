@@ -46,6 +46,8 @@ def vytvoreni_tabulky_db(spojeni):
 
 #FUNKCE PRO PŘIDÁNÍ ÚKOLU: 
 def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
+    if not nazev.strip() or not popis.strip():
+        return False, "Název a popis nesmí být prázdné hodnoty."
     try:
         cursor = spojeni.cursor()
         cursor.execute("""
@@ -55,6 +57,7 @@ def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
         spojeni.commit()                                               
         return True, None
     except Error as chyba:
+        print(f"chyba v pridat ukol: {chyba}")
         return False, chyba
     finally:
         cursor.close()                                                     
@@ -74,7 +77,8 @@ def zobrazit_ukoly_db(spojeni):
 
 
 #FUNKCE PRO AKTUALIZOVÁNÍ ÚKOLŮ:
-def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):       
+def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
+    cursor = None   
     try:
         cursor = spojeni.cursor()
         cursor.execute("UPDATE ukoly SET stav = %s WHERE id = %s", (novy_stav, id_ukolu))
@@ -85,7 +89,8 @@ def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
     except Error as chyba:
         return False, chyba
     finally:
-        cursor.close()
+        if cursor:
+            cursor.close()
     
  
 

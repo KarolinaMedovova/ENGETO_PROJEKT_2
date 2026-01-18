@@ -13,12 +13,14 @@ def test_pridat_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", ("Název č.1",))
     vysledek = cursor.fetchone()
+    cursor.fetchall()   # bezpečně vyčistí buffer
     #assert vysledek is not None
     assert vysledek[1] == "Název č.1"
     assert vysledek[2] == "Popis č.1"
     assert vysledek[3] == "nezahájeno"
     #cursor.fetchall()
     cursor.execute("DELETE FROM ukoly WHERE nazev = %s", ("Název č.1",))
+    cursor.fetchall()
     connection_test_db.commit()
     cursor.close()
 
@@ -42,16 +44,21 @@ def test_aktualizovat_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", ("Název č.2", ))
     vysledek = cursor.fetchone()
+    cursor.fetchall()
     assert vysledek is not None
     assert vysledek[1] == "Název č.2"
+    assert vysledek[2] == "Popis č.2"
+    assert vysledek[3] == "nezahájeno"
     id_ukolu = vysledek[0]
     ok, chyba = aktualizovat_ukol_db(connection_test_db, id_ukolu, "hotovo")
     assert ok is True
     assert chyba is None
     cursor.execute("SELECT stav FROM ukoly WHERE id=%s", (id_ukolu,))
     novy_stav = cursor.fetchone()[0]
+    cursor.fetchall()
     assert novy_stav == "hotovo"
     cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
+    cursor.fetchall()
     connection_test_db.commit()
     cursor.close()
 
@@ -62,12 +69,14 @@ def test_aktualizovat_ukol_negativni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Úklid",))
     id_ukolu = cursor.fetchone()[0]
+    cursor.fetchall()
     neexistujici_ukol = id_ukolu + 1
     # nebo taky velmi spolehlivé je extrémně vysoké číslo, napr. neexistujici_ukol2 = 999999
     ok, chyba = aktualizovat_ukol_db(connection_test_db, neexistujici_ukol, "hotovo")
     assert ok is False
     assert chyba is not None
     cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
+    cursor.fetchall()
     connection_test_db.commit()
     cursor.close()
 
@@ -78,12 +87,14 @@ def test_odstranit_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Odstranit ukol",))
     new_id = cursor.fetchone()[0]
+    cursor.fetchall()
     #print(f"---ID nově vloženého ukolu je: {new_id} ---")
     ok, chyba = odstranit_ukol_db(connection_test_db, new_id)
     assert ok is True
     assert chyba is None
     cursor.execute("SELECT id FROM ukoly WHERE id = %s", (new_id,))
     result = cursor.fetchone()              # pokud výsledek selectu je nic, vyhodí to None
+    cursor.fetchall()
     assert result is None
     cursor.close()
 
@@ -93,12 +104,14 @@ def test_odstranit_ukol_negativni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT COUNT(*) FROM ukoly ")
     pocet_radku = cursor.fetchone()[0]
+    cursor.fetchall()
     id = 999999
     ok, chyba = odstranit_ukol_db(connection_test_db, id)
     assert ok is False
     assert chyba is not None
     cursor.execute("SELECT COUNT(*) FROM ukoly")
     radky = cursor.fetchone()[0]
+    cursor.fetchall()
     assert pocet_radku == radky
     cursor.close()
 
@@ -130,9 +143,11 @@ def test_zobrazit_ukoly_negativni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("RENAME TABLE ukoly to ukoly_negtest")
     connection_test_db.commit()
+    cursor.fetchall()
     vysledek, chyba = zobrazit_ukoly_db(connection_test_db)
     assert vysledek is None
     assert chyba is not None
     cursor.execute("RENAME TABLE ukoly_negtest to ukoly")
+    cursor.fetchall()
     connection_test_db.commit()
     cursor.close()
