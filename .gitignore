@@ -15,6 +15,8 @@ __pycache__/
 Projekt2_Databaze.py
 main_zaloha.py
 testovani_sql.py
+db_zaloha.py
+test_ukoly_zaloha.py
 
 # Ignoruj .env
 .env
