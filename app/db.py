@@ -19,18 +19,19 @@ def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K D
         if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
             return spojeni, None
     except Error as chyba:                          # POKUD NASTANE JAKÁKOLI CHYBA PŘI PŘIPOJENÍ, SKOČ SEM
-        return None, chyba                             # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
+        return None, str(chyba)                             # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
 
 
 
 # FUNKCE PRO VYTVOŘENÍ TABULKY V DB:
 def vytvoreni_tabulky_db(spojeni):
+    cursor = None                                   # cursor existuje od začátku, i když je prádzný
     try:
         cursor = spojeni.cursor()
         cursor.execute("""                                                      
             CREATE TABLE IF NOT EXISTS ukoly(
                 id INT AUTO_INCREMENT PRIMARY KEY,                                  
-                nazev TEXT NOT NULL,
+                nazev VARCHAR(255) NOT NULL,
                 popis TEXT NOT NULL,
                 stav VARCHAR(20) NOT NULL DEFAULT 'nezahájeno',
                 datum_vytvoreni DATE NOT NULL DEFAULT (CURDATE())
@@ -39,15 +40,17 @@ def vytvoreni_tabulky_db(spojeni):
         spojeni.commit()
         return True, None
     except Error as chyba:
-        return False, chyba
+        return False, str(chyba)
     finally:
-        cursor.close()                                                                                   
+        if cursor:
+            cursor.close()                                                                                   
 
 
 #FUNKCE PRO PŘIDÁNÍ ÚKOLU: 
 def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
     if not nazev.strip() or not popis.strip():
         return False, "Název a popis nesmí být prázdné hodnoty."
+    cursor = None
     try:
         cursor = spojeni.cursor()
         cursor.execute("""
@@ -57,27 +60,33 @@ def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
         spojeni.commit()                                               
         return True, None
     except Error as chyba:
-        print(f"chyba v pridat ukol: {chyba}")
-        return False, chyba
+        # print(f"chyba v pridat ukol: {chyba}")
+        return False, str(chyba)
     finally:
-        cursor.close()                                                     
+        if cursor:
+            cursor.close()                                                     
 
 
 #FUNKCE PRO ZOBRAZNÍ ÚKOLŮ:
 def zobrazit_ukoly_db(spojeni):
+    cursor = None
     try: 
         cursor = spojeni.cursor()
         cursor.execute("SELECT * FROM ukoly WHERE stav IN ('nezahájeno','probíhá') ORDER BY datum_vytvoreni DESC")        
         vysledek = cursor.fetchall()               #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu        
         return vysledek, None
     except Error as chyba:
-        return None, chyba
+        return None, str(chyba)
     finally:
-        cursor.close()
+        if cursor:
+            cursor.close()
 
 
 #FUNKCE PRO AKTUALIZOVÁNÍ ÚKOLŮ:
 def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
+    validni_stav = ["nezahájeno", "probíhá", "hotovo"]
+    if novy_stav not in validni_stav:
+        return False, "Neplatný stav! Povolený stav je nezahájeno, probíhá, hotovo."
     cursor = None   
     try:
         cursor = spojeni.cursor()
@@ -87,7 +96,7 @@ def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
             return False, "Úkol s tímto ID neexistuje"
         return True, None
     except Error as chyba:
-        return False, chyba
+        return False, str(chyba)
     finally:
         if cursor:
             cursor.close()
@@ -96,6 +105,7 @@ def aktualizovat_ukol_db(spojeni, id_ukolu, novy_stav):
 
 #FUNKCE PRO ZOBRAZENÍ VŠECH ID ÚKOLŮ:
 def seznam_id_ukolu_db(spojeni):
+    cursor = None
     try:
         cursor = spojeni.cursor()
         cursor.execute("SELECT id FROM ukoly")
@@ -105,14 +115,16 @@ def seznam_id_ukolu_db(spojeni):
             seznam_id.append(i[0])
         return seznam_id, None
     except Error as chyba:
-        return None, chyba
+        return False, str(chyba)
     finally:
-        cursor.close()
+        if cursor:
+            cursor.close()
 
 
 
 #FUNKCE PRO ODSTRANĚNÍ ÚKOLŮ:
 def odstranit_ukol_db(spojeni, id_ukolu):
+    cursor = None
     try:
         cursor = spojeni.cursor()
         cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))    
@@ -122,9 +134,10 @@ def odstranit_ukol_db(spojeni, id_ukolu):
         else:
             return False, "Úkol s tímto ID neexistuje"
     except Error as chyba:
-        return None, chyba
+        return False, str(chyba)
     finally:
-        cursor.close()
+        if cursor:
+            cursor.close()
     
     
 
