@@ -1,9 +1,5 @@
-#import os
-import pytest
-import mysql.connector
 from dotenv import load_dotenv
 load_dotenv()
-#from mysql.connector import Error
 from app.db import pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, odstranit_ukol_db
 
 
@@ -13,15 +9,10 @@ def test_pridat_ukol_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", ("Název č.1",))
     vysledek = cursor.fetchone()
-    cursor.fetchall()   # bezpečně vyčistí buffer
-    #assert vysledek is not None
+    cursor.fetchall()
     assert vysledek[1] == "Název č.1"
     assert vysledek[2] == "Popis č.1"
     assert vysledek[3] == "nezahájeno"
-    #cursor.fetchall()
-    cursor.execute("DELETE FROM ukoly WHERE nazev = %s", ("Název č.1",))
-    cursor.fetchall()
-    connection_test_db.commit()
     cursor.close()
 
 
@@ -34,7 +25,6 @@ def test_pridat_ukol_negativni(connection_test_db):
     cursor.execute("SELECT * FROM ukoly WHERE nazev = %s", (" ",))
     vysledek = cursor.fetchall()
     assert vysledek == []
-    #assert len(vysledek) == 0
     cursor.close()
 
 
@@ -57,9 +47,6 @@ def test_aktualizovat_ukol_pozitivni(connection_test_db):
     novy_stav = cursor.fetchone()[0]
     cursor.fetchall()
     assert novy_stav == "hotovo"
-    cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
-    cursor.fetchall()
-    connection_test_db.commit()
     cursor.close()
 
 
@@ -71,13 +58,9 @@ def test_aktualizovat_ukol_negativni(connection_test_db):
     id_ukolu = cursor.fetchone()[0]
     cursor.fetchall()
     neexistujici_ukol = id_ukolu + 1
-    # nebo taky velmi spolehlivé je extrémně vysoké číslo, napr. neexistujici_ukol2 = 999999
     ok, chyba = aktualizovat_ukol_db(connection_test_db, neexistujici_ukol, "hotovo")
     assert ok is False
     assert chyba is not None
-    cursor.execute("DELETE FROM ukoly WHERE id = %s", (id_ukolu,))
-    cursor.fetchall()
-    connection_test_db.commit()
     cursor.close()
 
 
@@ -88,12 +71,11 @@ def test_odstranit_ukol_pozitivni(connection_test_db):
     cursor.execute("SELECT id FROM ukoly WHERE nazev = %s", ("Odstranit ukol",))
     new_id = cursor.fetchone()[0]
     cursor.fetchall()
-    #print(f"---ID nově vloženého ukolu je: {new_id} ---")
     ok, chyba = odstranit_ukol_db(connection_test_db, new_id)
     assert ok is True
     assert chyba is None
     cursor.execute("SELECT id FROM ukoly WHERE id = %s", (new_id,))
-    result = cursor.fetchone()              # pokud výsledek selectu je nic, vyhodí to None
+    result = cursor.fetchone()
     cursor.fetchall()
     assert result is None
     cursor.close()
@@ -120,14 +102,13 @@ def test_odstranit_ukol_negativni(connection_test_db):
 # Pozitivní test pro připojední do testovací DB:
 def test_pripojeni_test_db_pozitivni(connection_test_db):
     assert connection_test_db is not None, "Nepodařilo se navázat spojení!"
-    assert connection_test_db.is_connected, "Spojení není aktivní!"
+    assert connection_test_db.is_connected(), "Spojení není aktivní!"
 
 
 # Pozitivní test pro funkci zobrazit úkoly:
 def test_zobrazit_ukoly_pozitivni(connection_test_db):
     cursor = connection_test_db.cursor()
     pridat_ukol_db(connection_test_db, "Zobrazení názvu", "Zobrazení popisu")
-    connection_test_db.commit()
     vysledek, chyba = zobrazit_ukoly_db(connection_test_db)
     assert len(vysledek) > 0
     assert chyba is None
