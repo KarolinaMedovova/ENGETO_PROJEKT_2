@@ -47,3 +47,16 @@ def connection_prod_db():
             spojeni.close()
         else:
             print("⚠️ Spojení není aktivní nebo nevzniklo — není co zavírat.")
+
+
+# fixtura pro automatické vyčištění testovací DB před a po testu :
+@pytest.fixture(autouse=True)                           # autouse=True = pytest spustí automaticky sám u každého testu!
+def clean_db(connection_test_db):
+    cursor = connection_test_db.cursor()
+    cursor.execute("TRUNCATE ukoly")
+    connection_test_db.commit()
+    # konec příprav, spusť test
+    yield                                              
+    cursor.execute("TRUNCATE ukoly")
+    connection_test_db.commit()
+    cursor.close()
