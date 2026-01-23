@@ -1,31 +1,30 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()                                       # NAČTENÍ .ENV SOUBORU
-#from tabulate import tabulate                       # NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP
-import mysql.connector                              # IMPORT KNIHOVY MY SQL, KTERÁ UMOŽŃUJE KOMUNIKACI PYTHONA S MYSQL
-from mysql.connector import Error                   # IMPORT ERROR
-#from datetime import date                           # IMPORT DATE
-#datum_vytvoreni = date.today()                         NENÍ POTŘEBA, NEBOT SE DATUM VKLÁDÁ DO SQL AUTOMATICKY.
+load_dotenv()
+import mysql.connector
+from mysql.connector import Error
+
+
 
 #FUNKCE PRO PŘIPOJENÍ DO DB:
-def pripojeni_db():                                 # FUNKCE PRO PŘIPOJENÍ K DB
-    try:                                            # ZKUS PROVÉST NÁSLEDUJÍCÍ, A POKUD NASTANE CHYBY, PŘEJDI DO EXCEPT
+def pripojeni_db():                                 
+    try:
         spojeni = mysql.connector.connect(
             host=os.getenv("DB_HOST"),
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD"),
             database=os.getenv("DB_NAME")
         )
-        if spojeni.is_connected():                  # FUNKCE IS.CONNECTED VRACÍ TRUE, POKUD JE SPOJENÍ AKTIVNÍ
+        if spojeni.is_connected():
             return spojeni, None
-    except Error as chyba:                          # POKUD NASTANE JAKÁKOLI CHYBA PŘI PŘIPOJENÍ, SKOČ SEM
-        return None, str(chyba)                             # POKUD SE PŘIPOJENÍ NEZDAŘÍ, FUNKCE VRÁTÍ NONE = TEDY NIC
+    except Error as chyba:
+        return None, str(chyba)
 
 
 
 # FUNKCE PRO VYTVOŘENÍ TABULKY V DB:
 def vytvoreni_tabulky_db(spojeni):
-    cursor = None                                   # cursor existuje od začátku, i když je prádzný
+    cursor = None    
     try:
         cursor = spojeni.cursor()
         cursor.execute("""                                                      
@@ -46,6 +45,7 @@ def vytvoreni_tabulky_db(spojeni):
             cursor.close()                                                                                   
 
 
+
 #FUNKCE PRO PŘIDÁNÍ ÚKOLU: 
 def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
     if not nazev.strip() or not popis.strip():
@@ -60,11 +60,11 @@ def pridat_ukol_db(spojeni, nazev, popis, stav="nezahájeno"):
         spojeni.commit()                                               
         return True, None
     except Error as chyba:
-        # print(f"chyba v pridat ukol: {chyba}")
         return False, str(chyba)
     finally:
         if cursor:
             cursor.close()                                                     
+
 
 
 #FUNKCE PRO ZOBRAZNÍ ÚKOLŮ:
@@ -73,7 +73,7 @@ def zobrazit_ukoly_db(spojeni):
     try: 
         cursor = spojeni.cursor()
         cursor.execute("SELECT * FROM ukoly WHERE stav IN ('nezahájeno','probíhá') ORDER BY datum_vytvoreni DESC")        
-        vysledek = cursor.fetchall()               #Vezme všechny řádky, které mi databáze poslala, a vloží je jako do seznamu        
+        vysledek = cursor.fetchall()     
         return vysledek, None
     except Error as chyba:
         return None, str(chyba)
