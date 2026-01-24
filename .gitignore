@@ -16,7 +16,7 @@ Projekt2_Databaze.py
 main_zaloha.py
 testovani_sql.py
 db_zaloha.py
-test_ukoly_zaloha.py
+zaloha_test_ukoly.py
 
 # Ignoruj .env
 .env
