@@ -1,7 +1,5 @@
-# NAČTENÍ KNIHOVNY PRO TABULKOVÝ VÝSTUP:
 from tabulate import tabulate
-# 1) IMPORTY FUNKCÍ Z DB:
-from db import ( pripojeni_db, vytvoreni_tabulky_db, pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, seznam_id_ukolu_db, odstranit_ukol_db, ukonceni_spojeni_db)
+from db import pripojeni_db, vytvoreni_tabulky_db, pridat_ukol_db, zobrazit_ukoly_db, aktualizovat_ukol_db, seznam_id_ukolu_db, odstranit_ukol_db, ukonceni_spojeni_db
 
 
 
@@ -34,11 +32,9 @@ def zobrazit_ukoly(spojeni):
            
     if vysledek:
         nazvy_sloupcu = ["ID", "Název", "Popis", "Stav", "Datum vytvoření"]
-        # capitalize převádí první písmeno na velké
         vysledek_format = []
         for id, nazev, popis, stav, datum in vysledek:
             vysledek_format.append((id, nazev, popis, stav.capitalize(), datum))
-            # tabulate vezme seznam řádků a názvy sloupců a vypíše je jako tabulku ve zvoleném stylu grid.
         print(tabulate(vysledek_format, headers=nazvy_sloupcu, tablefmt="grid"))
     else:
         print("⚠️ Tabulka 'ukoly' je prázdná. Zvolte jinou možnost v hlavním menu.")
@@ -59,8 +55,8 @@ def aktualizovat_ukol(spojeni):
         print(tabulate(seznam_hodnot, headers=nazvy_sloupcu, tablefmt="grid"))
 
     list_id = []
-    for radek in seznam_hodnot:                         # projdeme každý řádek v seznamu
-        list_id.append(radek[0])                                  # vezmeme první číslo z n-tice a přidáme ho do list_id
+    for radek in seznam_hodnot:                       
+        list_id.append(radek[0])                                
 
     while True:
         id_ukolu = input("Zadejte ID číslo úkolu, který chcete aktualizovat. (Pro návrat do hlavního menu zadejte 'x'.) ")
@@ -174,11 +170,11 @@ def hlavni_menu():
             odstranit_ukol(spojeni)
         elif option == "5":
             konec_programu(spojeni)
-            break                                     # UKONČUJE NEJBLIŽŠÍ SMYČKU (WHILE, FOR). JAKO CELEK UKONČUJE RETURN!
+            break                                   
         else:
             print("" "\n❌ Byla zadána neplatná volba. Prosím, zvolte možnost 1, 2, 3, 4 nebo 5.")
 
 
- # aby se hlavní menu nespouštělo v rámci automatizovaných testů
+
 if __name__ == "__main__":                        
     hlavni_menu()
